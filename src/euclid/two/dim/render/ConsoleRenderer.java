@@ -22,10 +22,9 @@ import javax.imageio.ImageIO;
 import euclid.two.dim.Configuration;
 import euclid.two.dim.ConsoleFrame;
 import euclid.two.dim.input.InputManager;
-import euclid.two.dim.model.Door;
 import euclid.two.dim.model.EuVector;
 import euclid.two.dim.model.GameSpaceObject;
-import euclid.two.dim.model.Room;
+import euclid.two.dim.world.Camera;
 import euclid.two.dim.world.WorldState;
 
 public class ConsoleRenderer extends Thread {
@@ -176,17 +175,26 @@ public class ConsoleRenderer extends Thread {
 		drawWorldState(g);
 	}
 
+	private AffineTransform buildTransform() {
+		Camera camera = currentState.getCamera();
+
+		AffineTransform aTransform = new AffineTransform();
+		aTransform.setToTranslation(000, 000);
+		aTransform.rotate(camera.getRotation());
+		aTransform.scale(camera.getZoom(), camera.getZoom());
+
+		return aTransform;
+
+	}
+
 	public void drawWorldState(Graphics2D g) {
-		/*
-		
-		*/
 
 		AffineTransform saveAT = g.getTransform();
-		g.transform(currentState.buildTransform());
+		g.transform(buildTransform());
 
 		renderCreator.setWorldState(currentState);
 
-		// Draw Explosions
+		// Draw renderables
 		for (Renderable renderable : renderCreator.getRenderables()) {
 			renderable.draw(g);
 		}
@@ -200,17 +208,6 @@ public class ConsoleRenderer extends Thread {
 			if (rad > 10) {
 				g.setColor(new Color(25, 25, 25));
 			}
-		}
-
-		g.setColor(new Color(200, 200, 200));
-
-		for (Room room : currentState.getRooms()) {
-			g.drawRect((int) room.getX(), (int) room.getY(), (int) room.getWidth(), (int) room.getHeight());
-		}
-
-		g.setColor(new Color(80, 80, 80));
-		for (Door door : currentState.getDoors()) {
-			g.drawLine((int) door.getPointOne().getX(), (int) door.getPointOne().getY(), (int) door.getPointTwo().getX(), (int) door.getPointTwo().getY());
 		}
 
 		g.setTransform(saveAT);

@@ -45,10 +45,5 @@ public class ClickEvent implements InputCommand {
 				unit.setTarget(gso.getId());
 			}
 		}
-
-		for (GameSpaceObject fish : worldState.getSelected()) {
-
-		}
-
 	}
 }

@@ -9,7 +9,7 @@ import euclid.two.dim.etherial.ExplosiveProjectile;
 import euclid.two.dim.etherial.Projectile;
 import euclid.two.dim.etherial.Slash;
 import euclid.two.dim.etherial.ZergDeath;
-import euclid.two.dim.map.ConvexPoly;
+import euclid.two.dim.model.ConvexPoly;
 import euclid.two.dim.model.GameSpaceObject;
 import euclid.two.dim.model.Hero;
 import euclid.two.dim.model.Minion;
@@ -80,7 +80,7 @@ public class RenderCreator implements UpdateVisitor, EtherialVisitor {
 			etherial.accept(this);
 		}
 
-		for (ConvexPoly poly : worldState.getGameMap().getPolygons()) {
+		for (ConvexPoly poly : worldState.getGameMap().getAllPolygons()) {
 			renderables.add(new PolyRender(poly));
 		}
 
