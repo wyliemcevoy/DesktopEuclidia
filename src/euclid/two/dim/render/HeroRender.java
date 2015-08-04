@@ -63,11 +63,9 @@ public class HeroRender implements Renderable {
 			g.drawRect(x - (radius / 2), y - radius, (int) (radius * health.getHealthPercentage()), 1);
 		}
 
-		float alpha = (float) .5;
+		float alpha = (float) .25;
 
 		g.setColor(new Color(1, 1, 1, alpha));
-
-		// g.drawArc(x - radius, y - radius, 2 * radius, 2 * radius, 0, 360);
 
 		for (EuVector vect : unit.getPath().getTargets()) {
 			g.drawLine(x, y, (int) vect.getX(), (int) vect.getY());

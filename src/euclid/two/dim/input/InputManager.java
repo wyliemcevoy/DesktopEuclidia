@@ -9,19 +9,26 @@ import java.awt.event.MouseWheelListener;
 
 import euclid.two.dim.HumanPlayer;
 import euclid.two.dim.model.EuVector;
+import euclid.two.dim.render.RenderCreator;
+import euclid.two.dim.world.Camera;
 
 public class InputManager implements MouseListener, MouseWheelListener, KeyListener {
 
 	private static Object lock = new Object();
 	private HumanPlayer player;
+	private RenderCreator renderCreator;
+	private Camera camera;
 
 	public InputManager(HumanPlayer player) {
 		this.player = player;
+		this.renderCreator = RenderCreator.getInstance();
+		this.camera = renderCreator.requestCamera();
 	}
 
 	@Override
 	public void mouseClicked(MouseEvent e) {
-		player.click(new EuVector(e.getX(), e.getY()));
+
+		player.click(camera.veiwToMap(new EuVector(e.getX(), e.getY())));
 	}
 
 	@Override
@@ -52,6 +59,8 @@ public class InputManager implements MouseListener, MouseWheelListener, KeyListe
 	@Override
 	public void mouseWheelMoved(MouseWheelEvent e) {
 
+		camera.setZoom(camera.getZoom() + -.1 * e.getPreciseWheelRotation());
+		this.renderCreator.requestCameraChange(camera);
 	}
 
 	@Override

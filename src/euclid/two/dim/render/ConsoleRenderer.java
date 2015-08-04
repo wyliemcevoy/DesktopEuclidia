@@ -22,9 +22,6 @@ import javax.imageio.ImageIO;
 import euclid.two.dim.Configuration;
 import euclid.two.dim.ConsoleFrame;
 import euclid.two.dim.input.InputManager;
-import euclid.two.dim.model.EuVector;
-import euclid.two.dim.model.GameSpaceObject;
-import euclid.two.dim.world.Camera;
 import euclid.two.dim.world.WorldState;
 
 public class ConsoleRenderer extends Thread {
@@ -47,7 +44,7 @@ public class ConsoleRenderer extends Thread {
 
 	public ConsoleRenderer(ArrayBlockingQueue<WorldState> rendererQueue, InputManager inputManager) {
 		this.rendererQueue = rendererQueue;
-		this.renderCreator = new RenderCreator();
+		this.renderCreator = RenderCreator.getInstance();
 		config = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDefaultConfiguration();
 		consoleFrame = new ConsoleFrame(width, height);
 		consoleFrame.addWindowListener(new FrameClose());
@@ -57,7 +54,7 @@ public class ConsoleRenderer extends Thread {
 		canvas.setSize(width * scale, height * scale);
 		consoleFrame.add(canvas, 0);
 		canvas.addMouseListener(inputManager);
-
+		canvas.addMouseWheelListener(inputManager);
 		canvas.setFocusable(true);
 		canvas.requestFocus();
 		canvas.addKeyListener(inputManager);
@@ -141,7 +138,7 @@ public class ConsoleRenderer extends Thread {
 				bg.dispose();
 			} while (!updateScreen());
 
-			// Better do some FPS limiting here
+			// FPS limiting
 			long renderTime = (System.nanoTime() - renderStart) / 100000;
 			try {
 				Thread.sleep(Math.max(0, fpsWait - renderTime));
@@ -175,41 +172,15 @@ public class ConsoleRenderer extends Thread {
 		drawWorldState(g);
 	}
 
-	private AffineTransform buildTransform() {
-		Camera camera = currentState.getCamera();
-
-		AffineTransform aTransform = new AffineTransform();
-		aTransform.setToTranslation(000, 000);
-		aTransform.rotate(camera.getRotation());
-		aTransform.scale(camera.getZoom(), camera.getZoom());
-
-		return aTransform;
-
-	}
-
 	public void drawWorldState(Graphics2D g) {
-
-		AffineTransform saveAT = g.getTransform();
-		g.transform(buildTransform());
-
 		renderCreator.setWorldState(currentState);
-
+		// save current transform
+		AffineTransform savedAT = g.getTransform();
+		g.transform(renderCreator.buildTransform());
 		// Draw renderables
 		for (Renderable renderable : renderCreator.getRenderables()) {
 			renderable.draw(g);
 		}
-
-		for (GameSpaceObject gso : currentState.getGsos()) {
-			EuVector pos = gso.getPosition();
-			int rad = (int) gso.getRadius();
-
-			g.setColor(gso.getColor());
-
-			if (rad > 10) {
-				g.setColor(new Color(25, 25, 25));
-			}
-		}
-
-		g.setTransform(saveAT);
+		g.setTransform(savedAT);
 	}
 }

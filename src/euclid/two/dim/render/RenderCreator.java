@@ -1,6 +1,8 @@
 package euclid.two.dim.render;
 
+import java.awt.geom.AffineTransform;
 import java.util.ArrayList;
+import java.util.concurrent.ArrayBlockingQueue;
 
 import euclid.two.dim.etherial.CircleGraphic;
 import euclid.two.dim.etherial.Etherial;
@@ -16,33 +18,52 @@ import euclid.two.dim.model.Minion;
 import euclid.two.dim.model.Obstacle;
 import euclid.two.dim.updater.UpdateVisitor;
 import euclid.two.dim.visitor.EtherialVisitor;
+import euclid.two.dim.world.Camera;
 import euclid.two.dim.world.WorldState;
 
 public class RenderCreator implements UpdateVisitor, EtherialVisitor {
 	private ArrayList<Renderable> renderables;
 	private WorldState worldState;
+	private Camera camera;
+	private static final Object lock = new Object();
+	private ArrayBlockingQueue<Camera> cameraChangeRequests;
+	private static RenderCreator instance;
 
 	public RenderCreator(WorldState worldState) {
 		this.worldState = worldState;
 		this.renderables = new ArrayList<Renderable>();
-
+		this.camera = new Camera();
+		this.cameraChangeRequests = new ArrayBlockingQueue<Camera>(5);
 	}
 
-	public RenderCreator() {
+	public void requestCameraChange(Camera camera) {
+		cameraChangeRequests.add(camera);
+	}
+
+	public static RenderCreator getInstance() {
+		if (instance == null) {
+			instance = new RenderCreator();
+		}
+		return instance;
+	}
+
+	private RenderCreator() {
 		this(null);
 	}
 
 	public void setWorldState(WorldState worldState) {
 		this.worldState = worldState;
-		this.renderables = new ArrayList<Renderable>();
-	}
+		this.renderables = new ArrayList<Renderable>(); // Comment this line out for weird graphics
 
-	public void add(GameSpaceObject gso) {
-		gso.acceptUpdateVisitor(this);
-	}
-
-	public void add(Etherial etherial) {
-		etherial.accept(this);
+		synchronized (lock) {
+			while (!cameraChangeRequests.isEmpty()) {
+				try {
+					camera = cameraChangeRequests.take();
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			}
+		}
 	}
 
 	@Override
@@ -65,7 +86,6 @@ public class RenderCreator implements UpdateVisitor, EtherialVisitor {
 	@Override
 	public void visit(Obstacle obstacle) {
 		// TODO Auto-generated method stub
-
 	}
 
 	public ArrayList<Renderable> getRenderables() {
@@ -82,6 +102,7 @@ public class RenderCreator implements UpdateVisitor, EtherialVisitor {
 
 		for (ConvexPoly poly : worldState.getGameMap().getAllPolygons()) {
 			renderables.add(new PolyRender(poly));
+			renderables.add(new StringRender("" + poly.getId(), poly.getCenter()));
 		}
 
 		return renderables;
@@ -113,5 +134,20 @@ public class RenderCreator implements UpdateVisitor, EtherialVisitor {
 	public void visit(CircleGraphic circleGraphic) {
 		this.renderables.add(new CircleRender(circleGraphic));
 
+	}
+
+	public AffineTransform buildTransform() {
+		AffineTransform aTransform = new AffineTransform();
+
+		synchronized (lock) {
+			aTransform.setToTranslation(camera.getMapX(), camera.getMapY());
+			aTransform.rotate(camera.getRotation());
+			aTransform.scale(camera.getZoom(), camera.getZoom());
+		}
+		return aTransform;
+	}
+
+	public Camera requestCamera() {
+		return camera.deepCopy();
 	}
 }
