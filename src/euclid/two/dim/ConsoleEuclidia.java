@@ -34,7 +34,6 @@ public class ConsoleEuclidia {
 
 		updateEngineThread = new UpdateEngineThread(worldState, game);
 		updateEngineThread.setRendererQueue(rendererQueue);
-		inputManager.setUpdateEngine(updateEngineThread.getUpdateEngine());
 
 		rendererQueue.add(worldState);
 
