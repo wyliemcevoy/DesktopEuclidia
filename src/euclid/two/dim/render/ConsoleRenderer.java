@@ -39,8 +39,8 @@ public class ConsoleRenderer extends Thread {
 	private ArrayBlockingQueue<WorldState> rendererQueue;
 	private WorldState currentState;
 	private RenderCreator renderCreator;
-
-	private Image backgroundImage;
+	private InputManager inputManager;
+	private Image backgroundImage, spaceStation;
 
 	public ConsoleRenderer(ArrayBlockingQueue<WorldState> rendererQueue, InputManager inputManager) {
 		this.rendererQueue = rendererQueue;
@@ -48,13 +48,14 @@ public class ConsoleRenderer extends Thread {
 		config = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDefaultConfiguration();
 		consoleFrame = new ConsoleFrame(width, height);
 		consoleFrame.addWindowListener(new FrameClose());
-
+		this.inputManager = inputManager;
 		// Canvas
 		canvas = new Canvas(config);
 		canvas.setSize(width * scale, height * scale);
 		consoleFrame.add(canvas, 0);
 		canvas.addMouseListener(inputManager);
 		canvas.addMouseWheelListener(inputManager);
+		canvas.addMouseMotionListener(inputManager);
 		canvas.setFocusable(true);
 		canvas.requestFocus();
 		canvas.addKeyListener(inputManager);
@@ -68,6 +69,8 @@ public class ConsoleRenderer extends Thread {
 
 		try {
 			this.backgroundImage = ImageIO.read(new File("C:\\Users\\Wylie\\Pictures\\Game\\desert.jpg"));
+			this.spaceStation = ImageIO.read(new File("C:\\Users\\Wylie\\Pictures\\Game\\SpacePlatformMap.png"));
+
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -149,9 +152,7 @@ public class ConsoleRenderer extends Thread {
 			renderTime = (System.nanoTime() - renderStart) / 100000;
 
 		}
-		consoleFrame.dispose();
-
-		System.exit(1);
+		die();
 	}
 
 	public void updateGame() {
@@ -168,7 +169,7 @@ public class ConsoleRenderer extends Thread {
 		g.setColor(Color.BLACK);
 		g.fillRect(0, 0, width, height);
 
-		g.drawImage(backgroundImage, 0, 0, 1000, 1000, 0, 0, backgroundImage.getWidth(null), backgroundImage.getHeight(null), null);
+		// g.drawImage(backgroundImage, 0, 0, 1000, 1000, 0, 0, backgroundImage.getWidth(null), backgroundImage.getHeight(null), null);
 		drawWorldState(g);
 	}
 
@@ -177,10 +178,18 @@ public class ConsoleRenderer extends Thread {
 		// save current transform
 		AffineTransform savedAT = g.getTransform();
 		g.transform(renderCreator.buildTransform());
+		g.drawImage(spaceStation, 0, 0, spaceStation.getWidth(null), spaceStation.getHeight(null), 0, 0, spaceStation.getWidth(null), spaceStation.getHeight(null), null);
 		// Draw renderables
 		for (Renderable renderable : renderCreator.getRenderables()) {
 			renderable.draw(g);
 		}
 		g.setTransform(savedAT);
+	}
+
+	private void die() {
+		inputManager.requestStop();
+		consoleFrame.dispose();
+
+		System.exit(1);
 	}
 }

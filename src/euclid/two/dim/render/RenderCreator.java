@@ -28,12 +28,13 @@ public class RenderCreator implements UpdateVisitor, EtherialVisitor {
 	private static final Object lock = new Object();
 	private ArrayBlockingQueue<Camera> cameraChangeRequests;
 	private static RenderCreator instance;
+	private static final boolean showNavMesh = false;
 
 	public RenderCreator(WorldState worldState) {
 		this.worldState = worldState;
 		this.renderables = new ArrayList<Renderable>();
 		this.camera = new Camera();
-		this.cameraChangeRequests = new ArrayBlockingQueue<Camera>(5);
+		this.cameraChangeRequests = new ArrayBlockingQueue<Camera>(10);
 	}
 
 	public void requestCameraChange(Camera camera) {
@@ -99,12 +100,13 @@ public class RenderCreator implements UpdateVisitor, EtherialVisitor {
 		for (Etherial etherial : worldState.getEtherials()) {
 			etherial.accept(this);
 		}
+		if (showNavMesh) {
+			for (ConvexPoly poly : worldState.getGameMap().getAllPolygons()) {
 
-		for (ConvexPoly poly : worldState.getGameMap().getAllPolygons()) {
-			renderables.add(new PolyRender(poly));
-			renderables.add(new StringRender("" + poly.getId(), poly.getCenter()));
+				renderables.add(new PolyRender(poly));
+				renderables.add(new StringRender("" + poly.getId(), poly.getCenter()));
+			}
 		}
-
 		return renderables;
 	}
 
