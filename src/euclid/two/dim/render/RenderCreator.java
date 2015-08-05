@@ -28,7 +28,7 @@ public class RenderCreator implements UpdateVisitor, EtherialVisitor {
 	private static final Object lock = new Object();
 	private ArrayBlockingQueue<Camera> cameraChangeRequests;
 	private static RenderCreator instance;
-	private static final boolean showNavMesh = false;
+	private static final boolean showNavMesh = true;
 
 	public RenderCreator(WorldState worldState) {
 		this.worldState = worldState;
