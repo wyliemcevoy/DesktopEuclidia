@@ -12,6 +12,7 @@ import euclid.two.dim.etherial.Projectile;
 import euclid.two.dim.etherial.Slash;
 import euclid.two.dim.etherial.ZergDeath;
 import euclid.two.dim.model.ConvexPoly;
+import euclid.two.dim.model.EuVector;
 import euclid.two.dim.model.GameSpaceObject;
 import euclid.two.dim.model.Hero;
 import euclid.two.dim.model.Minion;
@@ -30,8 +31,7 @@ public class RenderCreator implements UpdateVisitor, EtherialVisitor {
 	private static RenderCreator instance;
 	private static final boolean showNavMesh = true;
 
-	public RenderCreator(WorldState worldState) {
-		this.worldState = worldState;
+	private RenderCreator() {
 		this.renderables = new ArrayList<Renderable>();
 		this.camera = new Camera();
 		this.cameraChangeRequests = new ArrayBlockingQueue<Camera>(10);
@@ -43,13 +43,14 @@ public class RenderCreator implements UpdateVisitor, EtherialVisitor {
 
 	public static RenderCreator getInstance() {
 		if (instance == null) {
-			instance = new RenderCreator();
+			synchronized (RenderCreator.class) {
+				// Double check locking singleton
+				if (instance == null) {
+					instance = new RenderCreator();
+				}
+			}
 		}
 		return instance;
-	}
-
-	private RenderCreator() {
-		this(null);
 	}
 
 	public void setWorldState(WorldState worldState) {
@@ -124,7 +125,21 @@ public class RenderCreator implements UpdateVisitor, EtherialVisitor {
 	@Override
 	public void visit(Hero hero) {
 		this.renderables.add(new HeroRender(hero));
-
+		if (showNavMesh) {
+			ConvexPoly heroPoly = worldState.getGameMap().getNavMesh().getPoly(hero.getPosition());
+			String id = "";
+			if (heroPoly == null) {
+				id = "OoB";
+			}
+			else {
+				for (ConvexPoly poly : worldState.getGameMap().getNavMesh().getAllPolygons()) {
+					if (poly.contains(hero.getPosition())) {
+						id += poly.getId() + " ";
+					}
+				}
+			}
+			renderables.add(new StringRender(id, hero.getPosition().add(new EuVector(15, 15))));
+		}
 	}
 
 	@Override

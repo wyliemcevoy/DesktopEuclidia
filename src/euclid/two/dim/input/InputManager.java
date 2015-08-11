@@ -75,6 +75,7 @@ public class InputManager implements MouseListener, MouseWheelListener, KeyListe
 		synchronized (lock) {
 			camera.setZoom(camera.getZoom() + -.1 * e.getPreciseWheelRotation());
 		}
+
 		this.renderCreator.requestCameraChange(camera);
 	}
 
