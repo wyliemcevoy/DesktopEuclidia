@@ -22,9 +22,10 @@ import javax.imageio.ImageIO;
 import euclid.two.dim.input.InputManager;
 import euclid.two.dim.render.RenderCreator;
 import euclid.two.dim.render.Renderable;
+import euclid.two.dim.threads.WorldStateObserver;
 import euclid.two.dim.world.WorldState;
 
-public class ConsoleRenderer extends Thread {
+public class ConsoleRenderer extends Thread implements WorldStateObserver {
 	private GraphicsConfiguration config;
 	private boolean isRunning = true;
 	private Canvas canvas;
@@ -42,8 +43,8 @@ public class ConsoleRenderer extends Thread {
 	private InputManager inputManager;
 	private Image backgroundImage, spaceStation;
 
-	public ConsoleRenderer(ArrayBlockingQueue<WorldState> rendererQueue, InputManager inputManager) {
-		this.rendererQueue = rendererQueue;
+	public ConsoleRenderer(InputManager inputManager) {
+		this.rendererQueue = new ArrayBlockingQueue<WorldState>(10);
 		this.renderCreator = RenderCreator.getInstance();
 		config = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDefaultConfiguration();
 		consoleFrame = new ConsoleFrame(width, height);
@@ -187,7 +188,16 @@ public class ConsoleRenderer extends Thread {
 	private void die() {
 		inputManager.requestStop();
 		consoleFrame.dispose();
-
 		System.exit(1);
+	}
+
+	@Override
+	public void notify(WorldState worldState) {
+		try {
+			this.rendererQueue.put(worldState);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+
 	}
 }

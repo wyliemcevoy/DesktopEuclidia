@@ -2,49 +2,80 @@ package euclid.two.dim;
 
 import java.util.concurrent.ArrayBlockingQueue;
 
+import euclid.two.dim.input.AgentManager;
 import euclid.two.dim.input.InputManager;
+import euclid.two.dim.input.PlayerManager;
+import euclid.two.dim.input.event.InputEvent;
 import euclid.two.dim.model.Hero;
 import euclid.two.dim.team.Agent;
 import euclid.two.dim.team.Game;
 import euclid.two.dim.team.Team;
+import euclid.two.dim.threads.WorldStatePublisher;
 import euclid.two.dim.world.WorldState;
 import euclid.two.dim.world.WorldStateFactory;
 
 public class ConsoleEuclidia {
 	private ConsoleRenderer consoleRenderer;
-	private ArrayBlockingQueue<WorldState> rendererQueue;
+	private ArrayBlockingQueue<WorldState> worldStateQueue;
 	private UpdateEngineThread updateEngineThread;
+	private WorldStatePublisher worldStatePublisher;
+	private PlayerManager playerManager;
+	private AgentManager agentManager;
 
 	ConsoleEuclidia() {
 
-		rendererQueue = new ArrayBlockingQueue<WorldState>(5);
+		worldStateQueue = new ArrayBlockingQueue<WorldState>(5);
 
 		WorldStateFactory f = new WorldStateFactory();
 		WorldState worldState = f.createVsWorldState(Team.Red);
 
+		ArrayBlockingQueue<InputEvent> inputEvents = new ArrayBlockingQueue<InputEvent>(20);
+
 		Hero hero = f.createHero(Team.Blue);
 		HumanRtsPlayer human = new HumanRtsPlayer(Team.Blue);
 		human.acceptWorldState(worldState.deepCopy());
-		InputManager inputManager = new InputManager(human);
-		worldState.addObject(hero);
 
+		worldStatePublisher = new WorldStatePublisher(worldStateQueue);
+
+		InputManager inputManager = new InputManager(human, inputEvents);
+		worldState.addObject(hero);
+		playerManager = new PlayerManager(human, inputEvents);
 		Game game = new Game();
 		game.addPlayer(human);
-		game.addPlayer(new Agent(Team.Red));
+
+		Agent agent = new Agent(Team.Red);
+		game.addPlayer(agent);
+
+		this.agentManager = new AgentManager(agent);
 
 		updateEngineThread = new UpdateEngineThread(worldState, game);
-		updateEngineThread.setRendererQueue(rendererQueue);
+		updateEngineThread.setWorldStateQueue(worldStateQueue);
 
-		rendererQueue.add(worldState);
+		worldStateQueue.add(worldState);
 
-		consoleRenderer = new ConsoleRenderer(rendererQueue, inputManager);
-		consoleRenderer.start();
+		consoleRenderer = new ConsoleRenderer(inputManager);
 
+		registerObservers();
+		launchThreads();
+
+	}
+
+	private void registerObservers() {
+		worldStatePublisher.addListener(consoleRenderer);
+		worldStatePublisher.addListener(playerManager);
+		worldStatePublisher.addListener(agentManager);
+	}
+
+	private void launchThreads() {
+		(new Thread(worldStatePublisher)).start();
 		try {
 			Thread.sleep(100);
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
+
+		(new Thread(agentManager)).start();
+		consoleRenderer.start();
 
 		updateEngineThread.start();
 	}

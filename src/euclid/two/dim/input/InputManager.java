@@ -7,12 +7,16 @@ import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
+import java.util.concurrent.ArrayBlockingQueue;
 
 import euclid.two.dim.Configuration;
 import euclid.two.dim.HumanPlayer;
+import euclid.two.dim.input.event.InputEvent;
+import euclid.two.dim.input.event.MouseClickedEvent;
+import euclid.two.dim.input.event.MouseDraggedEvent;
+import euclid.two.dim.input.event.MousePressedEvent;
+import euclid.two.dim.input.event.MouseReleasedEvent;
 import euclid.two.dim.model.EuVector;
-import euclid.two.dim.render.Box;
-import euclid.two.dim.render.ConsoleOverlays;
 import euclid.two.dim.render.RenderCreator;
 import euclid.two.dim.world.Camera;
 
@@ -28,18 +32,15 @@ public class InputManager implements MouseListener, MouseWheelListener, KeyListe
 	private EuVector delta;
 	private ScrollListener scrollListener;
 	private Camera camera;
-	private EuVector mouseDown, mouseCurrent;
-	private Long mouseDownStartTime;
-	private ConsoleOverlays boxDrawer;
-	private boolean mouseIsDown;
 
-	public InputManager(HumanPlayer player) {
+	private ArrayBlockingQueue<InputEvent> inputEvents;
+
+	public InputManager(HumanPlayer player, ArrayBlockingQueue<InputEvent> inputEvents) {
 		this.player = player;
 		this.renderCreator = RenderCreator.getInstance();
 		this.camera = renderCreator.requestCamera();
 		this.delta = new EuVector(0, 0);
-		this.boxDrawer = ConsoleOverlays.getInstance();
-		this.mouseIsDown = false;
+		this.inputEvents = inputEvents;
 		startScrollListener();
 	}
 
@@ -50,14 +51,12 @@ public class InputManager implements MouseListener, MouseWheelListener, KeyListe
 
 	@Override
 	public void mouseClicked(MouseEvent e) {
-		if (e.getButton() == 3) {
-
-			synchronized (lock) {
-				player.click(camera.veiwToMap(new EuVector(e.getX(), e.getY())));
-			}
-		}
-		else {
-
+		EuVector location = camera.veiwToMap(new EuVector(e.getY(), e.getY()));
+		try {
+			this.inputEvents.put(new MouseClickedEvent(e.getButton(), location));
+		} catch (InterruptedException e1) {
+			System.out.println("Attempting to add an input event to the InputEventQueue when it is already full.");
+			e1.printStackTrace();
 		}
 	}
 
@@ -73,31 +72,25 @@ public class InputManager implements MouseListener, MouseWheelListener, KeyListe
 
 	@Override
 	public void mousePressed(MouseEvent e) {
-		if (e.getButton() == 1) {
-			this.mouseDownStartTime = System.currentTimeMillis();
-			this.mouseDown = camera.veiwToMap(new EuVector(e.getY(), e.getY()));
-			System.out.println("MOUSE down " + mouseDown);
-			this.mouseIsDown = true;
-			this.boxDrawer.addSelectionBox(new Box(mouseDown, mouseDown));
-		}
-		else if (e.getButton() == 3) {
-			player.click(camera.veiwToMap(new EuVector(e.getX(), e.getY())));
+
+		EuVector location = camera.veiwToMap(new EuVector(e.getY(), e.getY()));
+		try {
+			this.inputEvents.put(new MousePressedEvent(e.getButton(), location));
+		} catch (InterruptedException e1) {
+			System.out.println("Attempting to add an input event to the InputEventQueue when it is already full.");
+			e1.printStackTrace();
 		}
 	}
 
 	@Override
 	public void mouseReleased(MouseEvent e) {
-		long now = e.getWhen();
-		this.mouseIsDown = false;
-		this.mouseCurrent = new EuVector(e.getX(), e.getY());
-		this.boxDrawer.stopSelectionBox();
-		System.out.println("MOUSE released " + mouseCurrent);
-		if (now - mouseDownStartTime < 200) {
-			System.out.println("Mouse released time " + (now - mouseDownStartTime));
-			this.mouseClicked(e);
-		}
-		else {
-			player.selectUnitsIn(mouseDown, mouseCurrent);
+
+		EuVector location = camera.veiwToMap(new EuVector(e.getY(), e.getY()));
+		try {
+			this.inputEvents.put(new MouseReleasedEvent(e.getButton(), location));
+		} catch (InterruptedException e1) {
+			System.out.println("Attempting to add an input event to the InputEventQueue when it is already full.");
+			e1.printStackTrace();
 		}
 	}
 
@@ -111,7 +104,7 @@ public class InputManager implements MouseListener, MouseWheelListener, KeyListe
 
 	@Override
 	public void keyPressed(KeyEvent keyEvent) {
-		player.keyPressed(keyEvent.getKeyChar());
+		// TODO
 	}
 
 	@Override
@@ -126,10 +119,12 @@ public class InputManager implements MouseListener, MouseWheelListener, KeyListe
 
 	@Override
 	public void mouseDragged(MouseEvent e) {
-		this.mouseCurrent = camera.veiwToMap(new EuVector(e.getX(), e.getY()));
-		this.mouseMoved(e);
-		if (e.getButton() == 1) {
-			this.boxDrawer.addSelectionBox(new Box(mouseDown, mouseCurrent));
+		EuVector location = camera.veiwToMap(new EuVector(e.getY(), e.getY()));
+		try {
+			this.inputEvents.put(new MouseDraggedEvent(e.getButton(), location));
+		} catch (InterruptedException e1) {
+			System.out.println("Attempting to add an input event to the InputEventQueue when it is already full.");
+			e1.printStackTrace();
 		}
 	}
 
