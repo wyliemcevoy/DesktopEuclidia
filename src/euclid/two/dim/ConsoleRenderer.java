@@ -1,4 +1,4 @@
-package euclid.two.dim.render;
+package euclid.two.dim;
 
 import java.awt.Canvas;
 import java.awt.Color;
@@ -19,9 +19,9 @@ import java.util.concurrent.ArrayBlockingQueue;
 
 import javax.imageio.ImageIO;
 
-import euclid.two.dim.Configuration;
-import euclid.two.dim.ConsoleFrame;
 import euclid.two.dim.input.InputManager;
+import euclid.two.dim.render.RenderCreator;
+import euclid.two.dim.render.Renderable;
 import euclid.two.dim.world.WorldState;
 
 public class ConsoleRenderer extends Thread {
@@ -168,8 +168,6 @@ public class ConsoleRenderer extends Thread {
 	public void renderGame(Graphics2D g) {
 		g.setColor(Color.BLACK);
 		g.fillRect(0, 0, width, height);
-
-		// g.drawImage(backgroundImage, 0, 0, 1000, 1000, 0, 0, backgroundImage.getWidth(null), backgroundImage.getHeight(null), null);
 		drawWorldState(g);
 	}
 

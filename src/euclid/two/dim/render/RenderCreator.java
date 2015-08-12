@@ -11,6 +11,7 @@ import euclid.two.dim.etherial.ExplosiveProjectile;
 import euclid.two.dim.etherial.Projectile;
 import euclid.two.dim.etherial.Slash;
 import euclid.two.dim.etherial.ZergDeath;
+import euclid.two.dim.model.Building;
 import euclid.two.dim.model.ConvexPoly;
 import euclid.two.dim.model.EuVector;
 import euclid.two.dim.model.GameSpaceObject;
@@ -30,11 +31,13 @@ public class RenderCreator implements UpdateVisitor, EtherialVisitor {
 	private ArrayBlockingQueue<Camera> cameraChangeRequests;
 	private static RenderCreator instance;
 	private static final boolean showNavMesh = true;
+	private ConsoleOverlays boxDrawer;
 
 	private RenderCreator() {
 		this.renderables = new ArrayList<Renderable>();
 		this.camera = new Camera();
 		this.cameraChangeRequests = new ArrayBlockingQueue<Camera>(10);
+		this.boxDrawer = ConsoleOverlays.getInstance();
 	}
 
 	public void requestCameraChange(Camera camera) {
@@ -55,7 +58,7 @@ public class RenderCreator implements UpdateVisitor, EtherialVisitor {
 
 	public void setWorldState(WorldState worldState) {
 		this.worldState = worldState;
-		this.renderables = new ArrayList<Renderable>(); // Comment this line out for weird graphics
+		this.renderables = new ArrayList<Renderable>();
 
 		synchronized (lock) {
 			while (!cameraChangeRequests.isEmpty()) {
@@ -70,7 +73,6 @@ public class RenderCreator implements UpdateVisitor, EtherialVisitor {
 
 	@Override
 	public void visit(Projectile projectile) {
-
 		this.renderables.add(new ProjectileRender(projectile));
 	}
 
@@ -82,28 +84,27 @@ public class RenderCreator implements UpdateVisitor, EtherialVisitor {
 	@Override
 	public void visit(Minion unit) {
 		this.renderables.add(new UnitRender(unit));
-
 	}
 
 	@Override
 	public void visit(Obstacle obstacle) {
-		// TODO Auto-generated method stub
+		// this.renderables.add(new CirlceRender());
 	}
 
 	public ArrayList<Renderable> getRenderables() {
 
 		for (GameSpaceObject gso : worldState.getGameSpaceObjects()) {
-
 			gso.acceptUpdateVisitor(this);
-
 		}
 
 		for (Etherial etherial : worldState.getEtherials()) {
 			etherial.accept(this);
 		}
+
+		renderables.addAll(boxDrawer.getOverlays());
+
 		if (showNavMesh) {
 			for (ConvexPoly poly : worldState.getGameMap().getAllPolygons()) {
-
 				renderables.add(new PolyRender(poly));
 				renderables.add(new StringRender("" + poly.getId(), poly.getCenter()));
 			}
@@ -166,5 +167,14 @@ public class RenderCreator implements UpdateVisitor, EtherialVisitor {
 
 	public Camera requestCamera() {
 		return camera.deepCopy();
+	}
+
+	@Override
+	public void accept(Building building) {
+		if (showNavMesh) {
+			this.renderables.add(new CircleRender(building.getPosition(), building.getRadius()));
+		}
+
+		this.renderables.add(new BuildingRender(building));
 	}
 }

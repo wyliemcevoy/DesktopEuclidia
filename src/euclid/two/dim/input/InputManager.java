@@ -11,6 +11,8 @@ import java.awt.event.MouseWheelListener;
 import euclid.two.dim.Configuration;
 import euclid.two.dim.HumanPlayer;
 import euclid.two.dim.model.EuVector;
+import euclid.two.dim.render.Box;
+import euclid.two.dim.render.ConsoleOverlays;
 import euclid.two.dim.render.RenderCreator;
 import euclid.two.dim.world.Camera;
 
@@ -26,12 +28,18 @@ public class InputManager implements MouseListener, MouseWheelListener, KeyListe
 	private EuVector delta;
 	private ScrollListener scrollListener;
 	private Camera camera;
+	private EuVector mouseDown, mouseCurrent;
+	private Long mouseDownStartTime;
+	private ConsoleOverlays boxDrawer;
+	private boolean mouseIsDown;
 
 	public InputManager(HumanPlayer player) {
 		this.player = player;
 		this.renderCreator = RenderCreator.getInstance();
 		this.camera = renderCreator.requestCamera();
 		this.delta = new EuVector(0, 0);
+		this.boxDrawer = ConsoleOverlays.getInstance();
+		this.mouseIsDown = false;
 		startScrollListener();
 	}
 
@@ -42,10 +50,14 @@ public class InputManager implements MouseListener, MouseWheelListener, KeyListe
 
 	@Override
 	public void mouseClicked(MouseEvent e) {
-		synchronized (lock) {
-			System.out.println(" screen " + e.getX() + "," + e.getY() + " map Location " + camera.veiwToMap(new EuVector(e.getX(), e.getY())));
+		if (e.getButton() == 3) {
 
-			player.click(camera.veiwToMap(new EuVector(e.getX(), e.getY())));
+			synchronized (lock) {
+				player.click(camera.veiwToMap(new EuVector(e.getX(), e.getY())));
+			}
+		}
+		else {
+
 		}
 	}
 
@@ -60,23 +72,41 @@ public class InputManager implements MouseListener, MouseWheelListener, KeyListe
 	}
 
 	@Override
-	public void mousePressed(MouseEvent arg0) {
-		// TODO do nothing
-
+	public void mousePressed(MouseEvent e) {
+		if (e.getButton() == 1) {
+			this.mouseDownStartTime = System.currentTimeMillis();
+			this.mouseDown = camera.veiwToMap(new EuVector(e.getY(), e.getY()));
+			System.out.println("MOUSE down " + mouseDown);
+			this.mouseIsDown = true;
+			this.boxDrawer.addSelectionBox(new Box(mouseDown, mouseDown));
+		}
+		else if (e.getButton() == 3) {
+			player.click(camera.veiwToMap(new EuVector(e.getX(), e.getY())));
+		}
 	}
 
 	@Override
-	public void mouseReleased(MouseEvent arg0) {
-		this.mouseClicked(arg0);
+	public void mouseReleased(MouseEvent e) {
+		long now = e.getWhen();
+		this.mouseIsDown = false;
+		this.mouseCurrent = new EuVector(e.getX(), e.getY());
+		this.boxDrawer.stopSelectionBox();
+		System.out.println("MOUSE released " + mouseCurrent);
+		if (now - mouseDownStartTime < 200) {
+			System.out.println("Mouse released time " + (now - mouseDownStartTime));
+			this.mouseClicked(e);
+		}
+		else {
+			player.selectUnitsIn(mouseDown, mouseCurrent);
+		}
 	}
 
 	@Override
 	public void mouseWheelMoved(MouseWheelEvent e) {
 		synchronized (lock) {
 			camera.setZoom(camera.getZoom() + -.1 * e.getPreciseWheelRotation());
+			this.renderCreator.requestCameraChange(camera);
 		}
-
-		this.renderCreator.requestCameraChange(camera);
 	}
 
 	@Override
@@ -95,8 +125,12 @@ public class InputManager implements MouseListener, MouseWheelListener, KeyListe
 	}
 
 	@Override
-	public void mouseDragged(MouseEvent arg0) {
-		// TODO Auto-generated method stub
+	public void mouseDragged(MouseEvent e) {
+		this.mouseCurrent = camera.veiwToMap(new EuVector(e.getX(), e.getY()));
+		this.mouseMoved(e);
+		if (e.getButton() == 1) {
+			this.boxDrawer.addSelectionBox(new Box(mouseDown, mouseCurrent));
+		}
 	}
 
 	@Override
@@ -120,7 +154,6 @@ public class InputManager implements MouseListener, MouseWheelListener, KeyListe
 		}
 
 		this.delta = new EuVector(deltaX, deltaY);
-
 	}
 
 	public boolean scrollRequired() {
@@ -132,6 +165,7 @@ public class InputManager implements MouseListener, MouseWheelListener, KeyListe
 			camera.setMapX(camera.getMapX() + delta.getX());
 			camera.setMapY(camera.getMapY() + delta.getY());
 		}
+
 		this.renderCreator.requestCameraChange(camera);
 	}
 

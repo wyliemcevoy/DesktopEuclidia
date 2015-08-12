@@ -4,7 +4,6 @@ import java.util.concurrent.ArrayBlockingQueue;
 
 import euclid.two.dim.input.InputManager;
 import euclid.two.dim.model.Hero;
-import euclid.two.dim.render.ConsoleRenderer;
 import euclid.two.dim.team.Agent;
 import euclid.two.dim.team.Game;
 import euclid.two.dim.team.Team;
@@ -24,7 +23,8 @@ public class ConsoleEuclidia {
 		WorldState worldState = f.createVsWorldState(Team.Red);
 
 		Hero hero = f.createHero(Team.Blue);
-		HumanMobaPlayer human = new HumanMobaPlayer(Team.Blue, hero.getId());
+		HumanRtsPlayer human = new HumanRtsPlayer(Team.Blue);
+		human.acceptWorldState(worldState.deepCopy());
 		InputManager inputManager = new InputManager(human);
 		worldState.addObject(hero);
 
