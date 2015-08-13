@@ -26,7 +26,7 @@ public class CommandQueue implements CommandManager {
 	}
 
 	@Override
-	public void put(Command command) {
+	public void add(Command command) {
 		queue.add(command);
 
 	}

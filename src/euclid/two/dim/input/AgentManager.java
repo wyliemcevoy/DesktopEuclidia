@@ -43,12 +43,11 @@ public class AgentManager implements Runnable, WorldStateObserver {
 
 			ArrayList<ConvexPoly> polys = worldState.getGameMap().getNavMesh().getAllPolygons();
 			ConvexPoly target = polys.get(rand.nextInt(polys.size()));
-			commandQueue.put(new MoveCommand(ids, target.getCenter()));
+			commandQueue.add(new MoveCommand(ids, target.getCenter()));
 
 			try {
 				Thread.sleep(1000);
 			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 		}

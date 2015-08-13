@@ -75,6 +75,7 @@ public class ConsoleEuclidia {
 		}
 
 		(new Thread(agentManager)).start();
+		(new Thread(playerManager)).start();
 		consoleRenderer.start();
 
 		updateEngineThread.start();

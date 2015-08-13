@@ -41,7 +41,13 @@ public class RenderCreator implements UpdateVisitor, EtherialVisitor {
 	}
 
 	public void requestCameraChange(Camera camera) {
-		cameraChangeRequests.add(camera);
+		try {
+			cameraChangeRequests.add(camera);
+
+		} catch (Exception e) {
+			System.out.println("Requesting camera change");
+			e.printStackTrace();
+		}
 	}
 
 	public static RenderCreator getInstance() {

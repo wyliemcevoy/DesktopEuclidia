@@ -12,6 +12,8 @@ import java.util.concurrent.ArrayBlockingQueue;
 import euclid.two.dim.Configuration;
 import euclid.two.dim.HumanPlayer;
 import euclid.two.dim.input.event.InputEvent;
+import euclid.two.dim.input.event.KeyPressedEvent;
+import euclid.two.dim.input.event.KeyTypedEvent;
 import euclid.two.dim.input.event.MouseClickedEvent;
 import euclid.two.dim.input.event.MouseDraggedEvent;
 import euclid.two.dim.input.event.MousePressedEvent;
@@ -22,8 +24,7 @@ import euclid.two.dim.world.Camera;
 
 public class InputManager implements MouseListener, MouseWheelListener, KeyListener, MouseMotionListener {
 
-	private static Object lock = new Object();
-	private HumanPlayer player;
+	private static final Object cameraChangeLock = new Object();
 	private RenderCreator renderCreator;
 	private static final int windowWidth = Configuration.width;
 	private static final int windowHeight = Configuration.height;
@@ -36,7 +37,7 @@ public class InputManager implements MouseListener, MouseWheelListener, KeyListe
 	private ArrayBlockingQueue<InputEvent> inputEvents;
 
 	public InputManager(HumanPlayer player, ArrayBlockingQueue<InputEvent> inputEvents) {
-		this.player = player;
+
 		this.renderCreator = RenderCreator.getInstance();
 		this.camera = renderCreator.requestCamera();
 		this.delta = new EuVector(0, 0);
@@ -49,15 +50,15 @@ public class InputManager implements MouseListener, MouseWheelListener, KeyListe
 		scrollListener.start();
 	}
 
+	private EuVector getMapLocation(double x, double y) {
+		synchronized (cameraChangeLock) {
+			return camera.veiwToMap(new EuVector(x, y));
+		}
+	}
+
 	@Override
 	public void mouseClicked(MouseEvent e) {
-		EuVector location = camera.veiwToMap(new EuVector(e.getY(), e.getY()));
-		try {
-			this.inputEvents.put(new MouseClickedEvent(e.getButton(), location));
-		} catch (InterruptedException e1) {
-			System.out.println("Attempting to add an input event to the InputEventQueue when it is already full.");
-			e1.printStackTrace();
-		}
+		this.inputEvents.add(new MouseClickedEvent(e.getButton(), getMapLocation(e.getX(), e.getY())));
 	}
 
 	@Override
@@ -73,30 +74,17 @@ public class InputManager implements MouseListener, MouseWheelListener, KeyListe
 	@Override
 	public void mousePressed(MouseEvent e) {
 
-		EuVector location = camera.veiwToMap(new EuVector(e.getY(), e.getY()));
-		try {
-			this.inputEvents.put(new MousePressedEvent(e.getButton(), location));
-		} catch (InterruptedException e1) {
-			System.out.println("Attempting to add an input event to the InputEventQueue when it is already full.");
-			e1.printStackTrace();
-		}
+		this.inputEvents.add(new MousePressedEvent(e.getButton(), getMapLocation(e.getX(), e.getY())));
 	}
 
 	@Override
 	public void mouseReleased(MouseEvent e) {
-
-		EuVector location = camera.veiwToMap(new EuVector(e.getY(), e.getY()));
-		try {
-			this.inputEvents.put(new MouseReleasedEvent(e.getButton(), location));
-		} catch (InterruptedException e1) {
-			System.out.println("Attempting to add an input event to the InputEventQueue when it is already full.");
-			e1.printStackTrace();
-		}
+		this.inputEvents.add(new MouseReleasedEvent(e.getButton(), getMapLocation(e.getX(), e.getY())));
 	}
 
 	@Override
 	public void mouseWheelMoved(MouseWheelEvent e) {
-		synchronized (lock) {
+		synchronized (cameraChangeLock) {
 			camera.setZoom(camera.getZoom() + -.1 * e.getPreciseWheelRotation());
 			this.renderCreator.requestCameraChange(camera);
 		}
@@ -104,7 +92,29 @@ public class InputManager implements MouseListener, MouseWheelListener, KeyListe
 
 	@Override
 	public void keyPressed(KeyEvent keyEvent) {
-		// TODO
+		int selectedAbility = -1;
+
+		switch (keyEvent.getKeyChar()) {
+		case 'q':
+			selectedAbility = 0;
+			break;
+		case 'w':
+			selectedAbility = 1;
+			break;
+		case 'e':
+			selectedAbility = 2;
+			break;
+		case 'r':
+			selectedAbility = 3;
+			break;
+		case 'a':
+			selectedAbility = -2;
+			break;
+		default:
+			selectedAbility = -1;
+		}
+		System.out.println("Input manager recieved " + selectedAbility);
+		this.inputEvents.add(new KeyPressedEvent(selectedAbility));
 	}
 
 	@Override
@@ -114,18 +124,35 @@ public class InputManager implements MouseListener, MouseWheelListener, KeyListe
 
 	@Override
 	public void keyTyped(KeyEvent keyEvent) {
+		int selectedAbility = -1;
 
+		switch (keyEvent.getKeyChar()) {
+		case 'q':
+			selectedAbility = 0;
+			break;
+		case 'w':
+			selectedAbility = 1;
+			break;
+		case 'e':
+			selectedAbility = 2;
+			break;
+		case 'r':
+			selectedAbility = 3;
+			break;
+		case 'a':
+			selectedAbility = -2;
+			break;
+		default:
+			selectedAbility = -1;
+		}
+		System.out.println("Input manager recieved " + selectedAbility);
+
+		this.inputEvents.add(new KeyTypedEvent(selectedAbility));
 	}
 
 	@Override
 	public void mouseDragged(MouseEvent e) {
-		EuVector location = camera.veiwToMap(new EuVector(e.getY(), e.getY()));
-		try {
-			this.inputEvents.put(new MouseDraggedEvent(e.getButton(), location));
-		} catch (InterruptedException e1) {
-			System.out.println("Attempting to add an input event to the InputEventQueue when it is already full.");
-			e1.printStackTrace();
-		}
+		this.inputEvents.add(new MouseDraggedEvent(e.getButton(), getMapLocation(e.getX(), e.getY())));
 	}
 
 	@Override
@@ -156,11 +183,10 @@ public class InputManager implements MouseListener, MouseWheelListener, KeyListe
 	}
 
 	public void requestScroll() {
-		synchronized (lock) {
+		synchronized (cameraChangeLock) {
 			camera.setMapX(camera.getMapX() + delta.getX());
 			camera.setMapY(camera.getMapY() + delta.getY());
 		}
-
 		this.renderCreator.requestCameraChange(camera);
 	}
 
