@@ -23,6 +23,8 @@ import euclid.two.dim.input.event.MousePressedEvent;
 import euclid.two.dim.input.event.MouseReleasedEvent;
 import euclid.two.dim.model.EuVector;
 import euclid.two.dim.model.Hero;
+import euclid.two.dim.render.Box;
+import euclid.two.dim.render.ConsoleOverlays;
 import euclid.two.dim.threads.WorldStateObserver;
 import euclid.two.dim.world.WorldState;
 
@@ -38,6 +40,7 @@ public class PlayerManager implements Runnable, InputEventVisitor, WorldStateObs
 	private SelectingState selecting;
 	private UnitsSelectedState unitsSelected;
 	private InputState currentState;
+	private ConsoleOverlays consoleOverlays;
 
 	public PlayerManager(HumanPlayer player, ArrayBlockingQueue<InputEvent> inputEvents) {
 		this.player = player;
@@ -46,7 +49,9 @@ public class PlayerManager implements Runnable, InputEventVisitor, WorldStateObs
 		this.stopRequested = false;
 		this.selectedUnits = new ArrayList<UUID>();
 
-		// Initialize states to memory
+		this.consoleOverlays = ConsoleOverlays.getInstance();
+
+		// Only create one instance of each states.
 		this.abilitySelected = new AbilitySelectedState();
 		this.selecting = new SelectingState();
 		this.unitsSelected = new UnitsSelectedState();
@@ -99,9 +104,11 @@ public class PlayerManager implements Runnable, InputEventVisitor, WorldStateObs
 	public void visit(MouseClickedEvent mouseClickedEvent) {
 		if (mouseClickedEvent.getButton() == 3) {
 			currentState.rightDown(mouseClickedEvent.getLocation());
+			currentState.rightUp(mouseClickedEvent.getLocation());
 		}
 		else if (mouseClickedEvent.getButton() == 1) {
 			currentState.leftDown(mouseClickedEvent.getLocation());
+			currentState.leftUp(mouseClickedEvent.getLocation());
 		}
 	}
 
@@ -179,7 +186,15 @@ public class PlayerManager implements Runnable, InputEventVisitor, WorldStateObs
 			ArrayList<UUID> updatedSelectedUnits = worldState.getUnitsInsideRect(player.getTeam(), downLocation, location);
 			if (updatedSelectedUnits.size() > 0) {
 				selectedUnits = updatedSelectedUnits;
+
+				ArrayList<UUID> leakedCopy = new ArrayList<UUID>();
+				for (UUID id : updatedSelectedUnits) {
+					leakedCopy.add(id);
+				}
+
+				consoleOverlays.updateSelectedUnits(leakedCopy);
 			}
+			consoleOverlays.stopSelectionBox();
 			currentState = unitsSelected;
 		}
 
@@ -196,6 +211,7 @@ public class PlayerManager implements Runnable, InputEventVisitor, WorldStateObs
 		@Override
 		public void mouseMove(EuVector location) {
 			// Update drawing of selection rectangle
+			consoleOverlays.addSelectionBox(new Box(downLocation, location));
 		}
 
 		@Override
@@ -258,7 +274,6 @@ public class PlayerManager implements Runnable, InputEventVisitor, WorldStateObs
 
 			for (UUID id : selectedUnits) {
 				Hero hero = worldState.getHero(id);
-				System.out.println("Abilty requested for " + id);
 
 				List<Ability> abilities = hero.getAbilities();
 				if (abilities.size() > index && index >= 0) {

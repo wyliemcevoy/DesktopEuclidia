@@ -63,17 +63,22 @@ public class HeroRender implements Renderable {
 			g.drawRect(x - (radius / 2), y - radius, (int) (radius * health.getHealthPercentage()), 1);
 		}
 
-		float alpha = (float) .35;
-
-		g.setColor(new Color(1, 1, 1, alpha));
-
+		g.setColor(new Color(0, 1, 0, .20f));
+		boolean dontDrawFirst = true;
 		for (EuVector vect : unit.getPath().getTargets()) {
-			g.drawLine(x, y, (int) vect.getX(), (int) vect.getY());
 
-			g.drawArc(x - 5, y - 5, 10, 10, 0, 360);
+			if (dontDrawFirst) {
+				dontDrawFirst = false;
+			}
+			else {
+				g.drawArc(x - 3, y - 3, 6, 6, 0, 360);
+			}
+
+			g.drawLine(x, y, (int) vect.getX(), (int) vect.getY());
 			//
 			x = (int) vect.getX();
 			y = (int) vect.getY();
+
 		}
 
 	}

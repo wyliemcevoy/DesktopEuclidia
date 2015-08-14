@@ -17,7 +17,7 @@ public class PolyRender implements Renderable {
 
 	@Override
 	public void draw(Graphics2D g) {
-		g.setColor(Color.BLUE);
+		g.setColor(new Color(0, 0, 255, 100));
 		for (Segment segment : poly.getSegments()) {
 			int x1 = (int) segment.getOne().getX();
 			int x2 = (int) segment.getTwo().getX();
@@ -25,7 +25,7 @@ public class PolyRender implements Renderable {
 			int y2 = (int) segment.getTwo().getY();
 			g.drawLine(x1, y1, x2, y2);
 		}
-		g.setColor(Color.RED);
+		g.setColor(new Color(255, 0, 0, 100));
 		for (Door door : poly.getDoors()) {
 			int x1 = (int) door.getPointOne().getX();
 			int x2 = (int) door.getPointTwo().getX();

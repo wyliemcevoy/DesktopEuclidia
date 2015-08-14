@@ -43,8 +43,10 @@ public class RectangleRender implements Renderable {
 	public void draw(Graphics2D g) {
 
 		float alpha = (float) .35;
-		g.setColor(new Color(1, 1, 1, alpha));
 
+		g.setColor(new Color(128, 255, 0, 35));
+		g.fillRect(x, y, width, height);
+		g.setColor(new Color(0, 255, 0));
 		g.drawRect(x, y, width, height);
 	}
 

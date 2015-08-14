@@ -1,6 +1,7 @@
 package euclid.two.dim.render;
 
 import java.util.ArrayList;
+import java.util.UUID;
 
 public class ConsoleOverlays {
 
@@ -8,9 +9,11 @@ public class ConsoleOverlays {
 	private boolean drawSelectionBox;
 	private Box box;
 	private static ConsoleOverlays instance;
+	private ArrayList<UUID> selectedUnits;
 
 	private ConsoleOverlays() {
 		this.drawSelectionBox = false;
+		this.selectedUnits = new ArrayList<UUID>();
 	}
 
 	public static ConsoleOverlays getInstance() {
@@ -32,6 +35,12 @@ public class ConsoleOverlays {
 		}
 	}
 
+	public void updateSelectedUnits(ArrayList<UUID> selectedUnits) {
+		synchronized (lock) {
+			this.selectedUnits = selectedUnits;
+		}
+	}
+
 	public void stopSelectionBox() {
 		synchronized (lock) {
 			this.drawSelectionBox = false;
@@ -47,6 +56,11 @@ public class ConsoleOverlays {
 			}
 		}
 		return overlays;
+	}
 
+	public ArrayList<UUID> getSelectedUnits() {
+		synchronized (lock) {
+			return selectedUnits;
+		}
 	}
 }

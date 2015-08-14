@@ -1,7 +1,9 @@
 package euclid.two.dim.render;
 
+import java.awt.Color;
 import java.awt.geom.AffineTransform;
 import java.util.ArrayList;
+import java.util.UUID;
 import java.util.concurrent.ArrayBlockingQueue;
 
 import euclid.two.dim.etherial.CircleGraphic;
@@ -18,6 +20,7 @@ import euclid.two.dim.model.GameSpaceObject;
 import euclid.two.dim.model.Hero;
 import euclid.two.dim.model.Minion;
 import euclid.two.dim.model.Obstacle;
+import euclid.two.dim.model.Unit;
 import euclid.two.dim.updater.UpdateVisitor;
 import euclid.two.dim.visitor.EtherialVisitor;
 import euclid.two.dim.world.Camera;
@@ -98,6 +101,13 @@ public class RenderCreator implements UpdateVisitor, EtherialVisitor {
 	}
 
 	public ArrayList<Renderable> getRenderables() {
+
+		for (UUID id : boxDrawer.getSelectedUnits()) {
+			Unit unit = worldState.getUnit(id);
+			EuVector location = unit.getPosition();
+			double radius = unit.getRadius();
+			renderables.add(new CircleRender(new EuVector(location.getX(), location.getY() + radius * .5), radius * .75, radius / 3, new Color(0, 255, 0, 150)));
+		}
 
 		for (GameSpaceObject gso : worldState.getGameSpaceObjects()) {
 			gso.acceptUpdateVisitor(this);

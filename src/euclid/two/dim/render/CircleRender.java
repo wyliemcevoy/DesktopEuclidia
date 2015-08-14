@@ -7,24 +7,36 @@ import euclid.two.dim.etherial.CircleGraphic;
 import euclid.two.dim.model.EuVector;
 
 public class CircleRender implements Renderable {
-	private int x, y, radius;
+	private int x, y, radiusX, radiusY;
+	private Color color;
 
 	public CircleRender(CircleGraphic circle) {
 		this.x = (int) circle.getLocation().getX();
 		this.y = (int) circle.getLocation().getY();
-		this.radius = circle.getRadius();
+		this.radiusX = circle.getRadius();
+		this.radiusY = circle.getRadius();
+		this.color = new Color(1, 1, 1, .5f);
 	}
 
 	public CircleRender(EuVector location, double radius) {
 		this.x = (int) location.getX();
 		this.y = (int) location.getY();
-		this.radius = (int) radius;
+		this.radiusX = (int) radius;
+		this.radiusY = (int) radius;
+		this.color = new Color(1, 1, 1, .5f);
+	}
+
+	public CircleRender(EuVector location, double radiusX, double radiusY, Color color) {
+		this.x = (int) location.getX();
+		this.y = (int) location.getY();
+		this.radiusX = (int) radiusX;
+		this.radiusY = (int) radiusY;
+		this.color = color;
 	}
 
 	@Override
 	public void draw(Graphics2D g) {
-		float alpha = (float) .5;
-		g.setColor(new Color(1, 1, 1, alpha));
-		g.drawArc(x - radius, y - radius, radius * 2, radius * 2, 0, 360);
+		g.setColor(color);
+		g.drawArc(x - radiusX, y - radiusY, radiusX * 2, radiusY * 2, 0, 360);
 	}
 }

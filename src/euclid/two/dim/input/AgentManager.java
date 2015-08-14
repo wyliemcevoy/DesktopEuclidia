@@ -46,7 +46,7 @@ public class AgentManager implements Runnable, WorldStateObserver {
 			commandQueue.add(new MoveCommand(ids, target.getCenter()));
 
 			try {
-				Thread.sleep(1000);
+				Thread.sleep(4000);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}

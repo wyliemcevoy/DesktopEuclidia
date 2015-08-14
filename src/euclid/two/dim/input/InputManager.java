@@ -113,7 +113,6 @@ public class InputManager implements MouseListener, MouseWheelListener, KeyListe
 		default:
 			selectedAbility = -1;
 		}
-		System.out.println("Input manager recieved " + selectedAbility);
 		this.inputEvents.add(new KeyPressedEvent(selectedAbility));
 	}
 
@@ -145,7 +144,6 @@ public class InputManager implements MouseListener, MouseWheelListener, KeyListe
 		default:
 			selectedAbility = -1;
 		}
-		System.out.println("Input manager recieved " + selectedAbility);
 
 		this.inputEvents.add(new KeyTypedEvent(selectedAbility));
 	}
