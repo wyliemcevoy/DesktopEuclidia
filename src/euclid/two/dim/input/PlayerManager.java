@@ -271,17 +271,21 @@ public class PlayerManager implements Runnable, InputEventVisitor, WorldStateObs
 		@Override
 		public void leftDown(EuVector location) {
 			// Fire ability
+			if (index >= 0) {
+				for (UUID id : selectedUnits) {
+					Hero hero = worldState.getHero(id);
 
-			for (UUID id : selectedUnits) {
-				Hero hero = worldState.getHero(id);
+					List<Ability> abilities = hero.getAbilities();
+					if (abilities.size() > index) {
+						Ability ability = hero.getAbilities().get(index);
+						AbilityRequest request = ability.toRequest(id, worldState, location);
 
-				List<Ability> abilities = hero.getAbilities();
-				if (abilities.size() > index && index >= 0) {
-					Ability ability = hero.getAbilities().get(index);
-					AbilityRequest request = ability.toRequest(id, worldState, location);
-
-					commandQueue.add(new AbilityCommand(request));
+						commandQueue.add(new AbilityCommand(request));
+					}
 				}
+			}
+			else if (index == -2) {
+				// Fire attack move command
 			}
 			index = -1;
 		}

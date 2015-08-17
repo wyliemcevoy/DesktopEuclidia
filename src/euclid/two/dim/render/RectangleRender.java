@@ -8,6 +8,12 @@ import euclid.two.dim.model.EuVector;
 public class RectangleRender implements Renderable {
 
 	private int x, y, width, height;
+	private Color color;
+
+	public RectangleRender(EuVector one, EuVector two, Color color) {
+		this(one, two);
+		this.color = color;
+	}
 
 	public RectangleRender(EuVector one, EuVector two) {
 		// figure out if one or two is the top left
@@ -41,13 +47,17 @@ public class RectangleRender implements Renderable {
 
 	@Override
 	public void draw(Graphics2D g) {
+		Color border = new Color(1, 1, 1, .5f);
+		if (color == null) {
+			color = new Color(128, 255, 0, 35);
+			border = new Color(0, 255, 0);
+		}
 
-		float alpha = (float) .35;
-
-		g.setColor(new Color(128, 255, 0, 35));
-		g.fillRect(x, y, width, height);
-		g.setColor(new Color(0, 255, 0));
+		g.setColor(color);
+		// g.fillRect(x, y, width, height);
+		g.setColor(border);
 		g.drawRect(x, y, width, height);
+
 	}
 
 }

@@ -13,11 +13,9 @@ import java.awt.event.WindowEvent;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferStrategy;
 import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
 import java.util.concurrent.ArrayBlockingQueue;
 
-import javax.imageio.ImageIO;
+import javax.swing.ImageIcon;
 
 import euclid.two.dim.input.InputManager;
 import euclid.two.dim.render.RenderCreator;
@@ -41,7 +39,7 @@ public class ConsoleRenderer extends Thread implements WorldStateObserver {
 	private WorldState currentState;
 	private RenderCreator renderCreator;
 	private InputManager inputManager;
-	private Image backgroundImage, spaceStation;
+	private Image spaceStation;
 
 	public ConsoleRenderer(InputManager inputManager) {
 		this.rendererQueue = new ArrayBlockingQueue<WorldState>(10);
@@ -68,14 +66,7 @@ public class ConsoleRenderer extends Thread implements WorldStateObserver {
 			strategy = canvas.getBufferStrategy();
 		} while (strategy == null);
 
-		try {
-			this.backgroundImage = ImageIO.read(new File("C:\\Users\\Wylie\\Pictures\\Game\\desert.jpg"));
-			this.spaceStation = ImageIO.read(new File("C:\\Users\\Wylie\\Pictures\\Game\\SpacePlatformMap.png"));
-
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		this.spaceStation = (new ImageIcon(this.getClass().getResource("/imgs/SpacePlatformMap.png"))).getImage();
 	}
 
 	// create a hardware accelerated image

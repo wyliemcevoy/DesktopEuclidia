@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.UUID;
 import java.util.concurrent.ArrayBlockingQueue;
 
+import euclid.two.dim.datastructure.AABBNode;
 import euclid.two.dim.etherial.CircleGraphic;
 import euclid.two.dim.etherial.Etherial;
 import euclid.two.dim.etherial.Explosion;
@@ -34,6 +35,7 @@ public class RenderCreator implements UpdateVisitor, EtherialVisitor {
 	private ArrayBlockingQueue<Camera> cameraChangeRequests;
 	private static RenderCreator instance;
 	private static final boolean showNavMesh = true;
+	private static final boolean showAABBTree = true;
 	private ConsoleOverlays boxDrawer;
 
 	private RenderCreator() {
@@ -125,7 +127,24 @@ public class RenderCreator implements UpdateVisitor, EtherialVisitor {
 				renderables.add(new StringRender("" + poly.getId(), poly.getCenter()));
 			}
 		}
+
+		if (showAABBTree) {
+			worldState.recalculateAABBTree();
+			AABBNode root = worldState.getAABBRoot();
+			// addTreeToRenderables(root);
+			// root.printArea();
+		}
+
 		return renderables;
+	}
+
+	private void addTreeToRenderables(AABBNode node) {
+		if (node != null) {
+			renderables.add(new RectangleRender(node.getAabb().getTopLeft(), node.getAabb().getBottomRight(), new Color(1, 1, 1, .02f)));
+			addTreeToRenderables(node.getLeft());
+			addTreeToRenderables(node.getRight());
+		}
+
 	}
 
 	@Override
