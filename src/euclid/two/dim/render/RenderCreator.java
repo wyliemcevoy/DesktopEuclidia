@@ -41,7 +41,7 @@ public class RenderCreator implements UpdateVisitor, EtherialVisitor {
 	private RenderCreator() {
 		this.renderables = new ArrayList<Renderable>();
 		this.camera = new Camera();
-		this.cameraChangeRequests = new ArrayBlockingQueue<Camera>(10);
+		this.cameraChangeRequests = new ArrayBlockingQueue<Camera>(30);
 		this.boxDrawer = ConsoleOverlays.getInstance();
 	}
 
@@ -131,7 +131,7 @@ public class RenderCreator implements UpdateVisitor, EtherialVisitor {
 		if (showAABBTree) {
 			worldState.recalculateAABBTree();
 			AABBNode root = worldState.getAABBRoot();
-			// addTreeToRenderables(root);
+			addTreeToRenderables(root);
 			// root.printArea();
 		}
 

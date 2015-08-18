@@ -33,7 +33,6 @@ public class ConsoleEuclidia {
 
 		Hero hero = f.createHero(Team.Blue);
 		HumanRtsPlayer human = new HumanRtsPlayer(Team.Blue);
-		human.acceptWorldState(worldState.deepCopy());
 
 		worldStatePublisher = new WorldStatePublisher(worldStateQueue);
 
@@ -48,7 +47,7 @@ public class ConsoleEuclidia {
 
 		this.agentManager = new AgentManager(agent);
 
-		updateEngineThread = new UpdateEngineThread(worldState, game);
+		updateEngineThread = new UpdateEngineThread(worldState);
 		updateEngineThread.setWorldStateQueue(worldStateQueue);
 
 		worldStateQueue.add(worldState);

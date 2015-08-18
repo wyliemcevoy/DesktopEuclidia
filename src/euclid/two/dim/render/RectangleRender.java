@@ -47,14 +47,14 @@ public class RectangleRender implements Renderable {
 
 	@Override
 	public void draw(Graphics2D g) {
-		Color border = new Color(1, 1, 1, .5f);
+		Color border = new Color(1, 1, 1, .25f);
 		if (color == null) {
 			color = new Color(128, 255, 0, 35);
+			g.setColor(color);
+			g.fillRect(x, y, width, height);
 			border = new Color(0, 255, 0);
 		}
 
-		g.setColor(color);
-		// g.fillRect(x, y, width, height);
 		g.setColor(border);
 		g.drawRect(x, y, width, height);
 
