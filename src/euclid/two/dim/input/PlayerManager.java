@@ -6,7 +6,6 @@ import java.util.UUID;
 import java.util.concurrent.ArrayBlockingQueue;
 
 import euclid.two.dim.CommandQueue;
-import euclid.two.dim.HumanPlayer;
 import euclid.two.dim.ability.internal.Ability;
 import euclid.two.dim.ability.request.AbilityRequest;
 import euclid.two.dim.command.AbilityCommand;
@@ -21,17 +20,21 @@ import euclid.two.dim.input.event.MouseDraggedEvent;
 import euclid.two.dim.input.event.MouseMovedEvent;
 import euclid.two.dim.input.event.MousePressedEvent;
 import euclid.two.dim.input.event.MouseReleasedEvent;
+import euclid.two.dim.model.CasterUnit;
 import euclid.two.dim.model.EuVector;
 import euclid.two.dim.model.Hero;
 import euclid.two.dim.render.Box;
 import euclid.two.dim.render.ConsoleOverlays;
+import euclid.two.dim.team.Team;
 import euclid.two.dim.threads.WorldStateObserver;
+import euclid.two.dim.visitor.TypedSelection;
 import euclid.two.dim.world.WorldState;
 
 public class PlayerManager implements Runnable, InputEventVisitor, WorldStateObserver {
-	private final HumanPlayer player;
+	private final Team team;
 	private CommandQueue commandQueue;
 	private ArrayList<UUID> selectedUnits;
+	private ArrayList<UUID> selectedCasters;
 	private ArrayBlockingQueue<InputEvent> inputEvents;
 	private boolean stopRequested;
 	private WorldState worldState, nextWorldState;
@@ -42,12 +45,13 @@ public class PlayerManager implements Runnable, InputEventVisitor, WorldStateObs
 	private InputState currentState;
 	private ConsoleOverlays consoleOverlays;
 
-	public PlayerManager(HumanPlayer player, ArrayBlockingQueue<InputEvent> inputEvents) {
-		this.player = player;
+	public PlayerManager(Team player, ArrayBlockingQueue<InputEvent> inputEvents) {
+		this.team = player;
 		this.commandQueue = CommandQueue.getInstance();
 		this.inputEvents = inputEvents;
 		this.stopRequested = false;
 		this.selectedUnits = new ArrayList<UUID>();
+		this.selectedCasters = new ArrayList<UUID>();
 
 		this.consoleOverlays = ConsoleOverlays.getInstance();
 
@@ -183,9 +187,20 @@ public class PlayerManager implements Runnable, InputEventVisitor, WorldStateObs
 		@Override
 		public void leftUp(EuVector location) {
 			// Finished Selecting (see what is selected and update state)
-			ArrayList<UUID> updatedSelectedUnits = worldState.getUnitsInsideRect(player.getTeam(), downLocation, location);
+			TypedSelection selection = worldState.getTypedSelectionInRect(team, downLocation, location);
+			ArrayList<UUID> updatedSelectedUnits = selection.getIds();
+
 			if (updatedSelectedUnits.size() > 0) {
+
+				ArrayList<Hero> heros = selection.getHeros();
+				ArrayList<UUID> updatedCasterIds = new ArrayList<UUID>();
+				for (Hero hero : heros) {
+					updatedCasterIds.add(hero.getId());
+				}
+
 				selectedUnits = updatedSelectedUnits;
+
+				selectedCasters = selection.getHeroIds();
 
 				ArrayList<UUID> leakedCopy = new ArrayList<UUID>();
 				for (UUID id : updatedSelectedUnits) {
@@ -194,6 +209,11 @@ public class PlayerManager implements Runnable, InputEventVisitor, WorldStateObs
 
 				consoleOverlays.updateSelectedUnits(leakedCopy);
 			}
+			else if (selection.getBuildings().size() > 0) {
+				selectedUnits = selection.getBuildingIds();
+				selectedCasters = selectedUnits;
+			}
+
 			consoleOverlays.stopSelectionBox();
 			currentState = unitsSelected;
 		}
@@ -254,8 +274,39 @@ public class PlayerManager implements Runnable, InputEventVisitor, WorldStateObs
 		@Override
 		public void abilitySelected(int i) {
 			// Change state to ability selected
-			currentState = abilitySelected;
-			abilitySelected.setAbility(i);
+
+			if (i != -2 && selectedCasters.size() > 0) {
+
+				// determine if it is an instantaneous action or a target action
+
+				boolean shouldChangeState = false;
+
+				for (UUID id : selectedCasters) {
+
+					CasterUnit hero = worldState.getCaster(id);
+					if (hero != null) {
+						List<Ability> abilities = hero.getAbilities();
+						if (abilities.size() > i) {
+							Ability ability = hero.getAbilities().get(i);
+							if (ability.isImediate()) {
+								System.out.println(ability);
+								AbilityRequest request = ability.toRequest(id, worldState, new EuVector(0, 0));
+
+								commandQueue.add(new AbilityCommand(request));
+							}
+							else {
+								shouldChangeState = true;
+							}
+						}
+					}
+				}
+
+				if (shouldChangeState) {
+					currentState = abilitySelected;
+					abilitySelected.setAbility(i);
+				}
+
+			}
 		}
 
 	}
@@ -272,12 +323,14 @@ public class PlayerManager implements Runnable, InputEventVisitor, WorldStateObs
 		public void leftDown(EuVector location) {
 			// Fire ability
 			if (index >= 0) {
-				for (UUID id : selectedUnits) {
-					Hero hero = worldState.getHero(id);
+				for (UUID id : selectedCasters) {
+					CasterUnit hero = worldState.getCaster(id);
 
 					List<Ability> abilities = hero.getAbilities();
 					if (abilities.size() > index) {
 						Ability ability = hero.getAbilities().get(index);
+
+						System.out.println(ability);
 						AbilityRequest request = ability.toRequest(id, worldState, location);
 
 						commandQueue.add(new AbilityCommand(request));
@@ -287,6 +340,8 @@ public class PlayerManager implements Runnable, InputEventVisitor, WorldStateObs
 			else if (index == -2) {
 				// Fire attack move command
 			}
+
+			currentState = unitsSelected;
 			index = -1;
 		}
 

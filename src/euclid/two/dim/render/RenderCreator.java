@@ -22,6 +22,7 @@ import euclid.two.dim.model.Hero;
 import euclid.two.dim.model.Minion;
 import euclid.two.dim.model.Obstacle;
 import euclid.two.dim.model.Unit;
+import euclid.two.dim.team.Team;
 import euclid.two.dim.updater.UpdateVisitor;
 import euclid.two.dim.visitor.EtherialVisitor;
 import euclid.two.dim.world.Camera;
@@ -106,18 +107,22 @@ public class RenderCreator implements UpdateVisitor, EtherialVisitor {
 
 		for (UUID id : boxDrawer.getSelectedUnits()) {
 			Unit unit = worldState.getUnit(id);
-			EuVector location = unit.getPosition();
-			double radius = unit.getRadius();
-			renderables.add(new CircleRender(new EuVector(location.getX(), location.getY() + radius * .5), radius * .75, radius / 3, new Color(0, 255, 0, 150)));
+			if (unit != null) {
+				EuVector location = unit.getPosition();
+				double radius = unit.getRadius();
+				renderables.add(new CircleRender(new EuVector(location.getX(), location.getY() + radius * .5), radius * .75, radius / 3, new Color(0, 255, 0, 150)));
+			}
 		}
 
-		for (GameSpaceObject gso : worldState.getGameSpaceObjects()) {
+		for (GameSpaceObject gso : worldState.getGsos()) {
 			gso.acceptUpdateVisitor(this);
 		}
 
 		for (Etherial etherial : worldState.getEtherials()) {
 			etherial.accept(this);
 		}
+
+		renderables.add(new StringRender("" + worldState.getPlayer(Team.Blue).getMinerals(), new EuVector(10, 10)));
 
 		renderables.addAll(boxDrawer.getOverlays());
 
@@ -160,6 +165,7 @@ public class RenderCreator implements UpdateVisitor, EtherialVisitor {
 
 	@Override
 	public void visit(Hero hero) {
+
 		this.renderables.add(new HeroRender(hero));
 		if (showNavMesh) {
 			ConvexPoly heroPoly = worldState.getGameMap().getNavMesh().getPoly(hero.getPosition());
@@ -176,6 +182,7 @@ public class RenderCreator implements UpdateVisitor, EtherialVisitor {
 			}
 			renderables.add(new StringRender(id, hero.getPosition().add(new EuVector(15, 15))));
 		}
+
 	}
 
 	@Override

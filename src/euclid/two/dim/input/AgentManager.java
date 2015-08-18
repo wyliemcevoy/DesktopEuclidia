@@ -8,7 +8,7 @@ import euclid.two.dim.CommandQueue;
 import euclid.two.dim.command.MoveCommand;
 import euclid.two.dim.model.ConvexPoly;
 import euclid.two.dim.model.GameSpaceObject;
-import euclid.two.dim.team.Agent;
+import euclid.two.dim.team.Team;
 import euclid.two.dim.threads.WorldStateObserver;
 import euclid.two.dim.world.WorldState;
 
@@ -17,12 +17,12 @@ public class AgentManager implements Runnable, WorldStateObserver {
 	private static final Object worldStateChangeLock = new Object();
 	private WorldState worldState, nextWorldState;
 	private CommandQueue commandQueue;
-	private Agent agent;
+	private Team team;
 	private boolean stopRequested;
 	private Random rand;
 
-	public AgentManager(Agent agent) {
-		this.agent = agent;
+	public AgentManager(Team team) {
+		this.team = team;
 		this.commandQueue = CommandQueue.getInstance();
 		this.rand = new Random();
 	}
@@ -34,7 +34,7 @@ public class AgentManager implements Runnable, WorldStateObserver {
 				worldState = nextWorldState;
 			}
 
-			ArrayList<GameSpaceObject> friendlies = worldState.getFriendlyUnits(agent);
+			ArrayList<GameSpaceObject> friendlies = worldState.getFriendlyUnits(team);
 			ArrayList<UUID> ids = new ArrayList<UUID>();
 
 			for (GameSpaceObject gso : friendlies) {

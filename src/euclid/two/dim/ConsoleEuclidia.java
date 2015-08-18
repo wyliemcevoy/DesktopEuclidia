@@ -7,8 +7,6 @@ import euclid.two.dim.input.InputManager;
 import euclid.two.dim.input.PlayerManager;
 import euclid.two.dim.input.event.InputEvent;
 import euclid.two.dim.model.Hero;
-import euclid.two.dim.team.Agent;
-import euclid.two.dim.team.Game;
 import euclid.two.dim.team.Team;
 import euclid.two.dim.threads.WorldStatePublisher;
 import euclid.two.dim.world.WorldState;
@@ -32,20 +30,19 @@ public class ConsoleEuclidia {
 		ArrayBlockingQueue<InputEvent> inputEvents = new ArrayBlockingQueue<InputEvent>(20);
 
 		Hero hero = f.createHero(Team.Blue);
-		HumanRtsPlayer human = new HumanRtsPlayer(Team.Blue);
+		Player human = new Player(Team.Blue);
 
 		worldStatePublisher = new WorldStatePublisher(worldStateQueue);
 
-		InputManager inputManager = new InputManager(human, inputEvents);
+		InputManager inputManager = new InputManager(inputEvents);
 		worldState.addObject(hero);
-		playerManager = new PlayerManager(human, inputEvents);
-		Game game = new Game();
-		game.addPlayer(human);
+		playerManager = new PlayerManager(human.getTeam(), inputEvents);
 
-		Agent agent = new Agent(Team.Red);
-		game.addPlayer(agent);
+		worldState.addPlayer(human);
 
-		this.agentManager = new AgentManager(agent);
+		Player agent = new Player(Team.Red);
+		worldState.addPlayer(agent);
+		this.agentManager = new AgentManager(agent.getTeam());
 
 		updateEngineThread = new UpdateEngineThread(worldState);
 		updateEngineThread.setWorldStateQueue(worldStateQueue);

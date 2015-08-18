@@ -10,7 +10,6 @@ import java.awt.event.MouseWheelListener;
 import java.util.concurrent.ArrayBlockingQueue;
 
 import euclid.two.dim.Configuration;
-import euclid.two.dim.HumanPlayer;
 import euclid.two.dim.input.event.InputEvent;
 import euclid.two.dim.input.event.KeyPressedEvent;
 import euclid.two.dim.input.event.KeyTypedEvent;
@@ -36,7 +35,7 @@ public class InputManager implements MouseListener, MouseWheelListener, KeyListe
 
 	private ArrayBlockingQueue<InputEvent> inputEvents;
 
-	public InputManager(HumanPlayer player, ArrayBlockingQueue<InputEvent> inputEvents) {
+	public InputManager(ArrayBlockingQueue<InputEvent> inputEvents) {
 
 		this.renderCreator = RenderCreator.getInstance();
 		this.camera = renderCreator.requestCamera();
