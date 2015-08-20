@@ -20,8 +20,9 @@ import euclid.two.dim.model.EuVector;
 import euclid.two.dim.model.GameSpaceObject;
 import euclid.two.dim.model.Hero;
 import euclid.two.dim.model.Minion;
-import euclid.two.dim.model.Obstacle;
+import euclid.two.dim.model.ResourcePatch;
 import euclid.two.dim.model.Unit;
+import euclid.two.dim.model.Worker;
 import euclid.two.dim.team.Team;
 import euclid.two.dim.updater.UpdateVisitor;
 import euclid.two.dim.visitor.EtherialVisitor;
@@ -35,8 +36,8 @@ public class RenderCreator implements UpdateVisitor, EtherialVisitor {
 	private static final Object lock = new Object();
 	private ArrayBlockingQueue<Camera> cameraChangeRequests;
 	private static RenderCreator instance;
-	private static final boolean showNavMesh = true;
-	private static final boolean showAABBTree = true;
+	private static final boolean showNavMesh = false;
+	private static final boolean showAABBTree = false;
 	private ConsoleOverlays boxDrawer;
 
 	private RenderCreator() {
@@ -99,8 +100,8 @@ public class RenderCreator implements UpdateVisitor, EtherialVisitor {
 	}
 
 	@Override
-	public void visit(Obstacle obstacle) {
-		// this.renderables.add(new CirlceRender());
+	public void visit(ResourcePatch resourcePatch) {
+		this.renderables.add(new ResourcePatchRender(resourcePatch));
 	}
 
 	public ArrayList<Renderable> getRenderables() {
@@ -212,11 +213,17 @@ public class RenderCreator implements UpdateVisitor, EtherialVisitor {
 	}
 
 	@Override
-	public void accept(Building building) {
+	public void visit(Building building) {
 		if (showNavMesh) {
-			this.renderables.add(new CircleRender(building.getPosition(), building.getRadius()));
+			// this.renderables.add(new CircleRender(building.getPosition(), building.getRadius()));
 		}
 
 		this.renderables.add(new BuildingRender(building));
+	}
+
+	@Override
+	public void visit(Worker worker) {
+		this.renderables.add(new WorkerRender(worker));
+
 	}
 }

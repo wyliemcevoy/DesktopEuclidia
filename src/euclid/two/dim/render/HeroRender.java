@@ -38,10 +38,6 @@ public class HeroRender implements Renderable {
 		int frameX = 2;
 		int frameY = 2 + (index) * (height + 4);
 
-		/*
-		 * if (gso.getVelocity().getMagnitude() < .5) { index = 0; }
-		 */
-
 		if (theta > 0) {
 			frameX = (int) (2 + (Math.floor(8 * theta / Math.PI)) * (width + 4));
 		}
@@ -51,10 +47,9 @@ public class HeroRender implements Renderable {
 
 		radius = radius + 2;
 
-		// g.drawImage(source, x, y, x + ((int) width / 2), y + ((int) height / 2), frameX, frameY, frameX + width, frameY + height, null);
 		g.drawImage(source, x - radius, y - radius, x + radius, y + radius, frameX, frameY, frameX + width, frameY + height, null);
 
-		if (health.getHealthPercentage() < .6) {
+		if (health.getHealthPercentage() < .9) {
 
 			g.setColor(Color.BLACK);
 			g.drawRect(x - (radius / 2), y - radius, radius, 1);

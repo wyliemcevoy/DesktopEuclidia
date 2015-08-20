@@ -10,7 +10,7 @@ public class SpriteFlyWeight {
 	private Image[] zergDeath;
 	private Image[] explosion;
 	private static final Object lock = new Object();
-	private Image hatchery;
+	private Image hatchery, mineralPatch, drone;
 
 	public static SpriteFlyWeight getInstance() {
 		if (instance == null) {
@@ -28,7 +28,8 @@ public class SpriteFlyWeight {
 		img = ii.getImage();
 
 		this.hatchery = getImage("hatchery.png");
-
+		this.mineralPatch = getImage("mineralPatch.png");
+		this.drone = getImage("drone.png");
 		zergDeath = new Image[7];
 		explosion = new Image[7];
 
@@ -71,6 +72,14 @@ public class SpriteFlyWeight {
 		if (i < 0 || i > 6)
 			i = 0;
 		return explosion[i];
+	}
+
+	public Image getMineralPatch() {
+		return mineralPatch;
+	}
+
+	public Image getMineralDrone() {
+		return drone;
 	}
 
 }

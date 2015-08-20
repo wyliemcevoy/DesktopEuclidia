@@ -9,6 +9,8 @@ import euclid.two.dim.CommandQueue;
 import euclid.two.dim.ability.internal.Ability;
 import euclid.two.dim.ability.request.AbilityRequest;
 import euclid.two.dim.command.AbilityCommand;
+import euclid.two.dim.command.AttackCommand;
+import euclid.two.dim.command.GatherCommand;
 import euclid.two.dim.command.MoveCommand;
 import euclid.two.dim.input.event.InputEvent;
 import euclid.two.dim.input.event.InputEventVisitor;
@@ -22,6 +24,7 @@ import euclid.two.dim.input.event.MousePressedEvent;
 import euclid.two.dim.input.event.MouseReleasedEvent;
 import euclid.two.dim.model.CasterUnit;
 import euclid.two.dim.model.EuVector;
+import euclid.two.dim.model.GameSpaceObject;
 import euclid.two.dim.model.Hero;
 import euclid.two.dim.render.Box;
 import euclid.two.dim.render.ConsoleOverlays;
@@ -44,6 +47,7 @@ public class PlayerManager implements Runnable, InputEventVisitor, WorldStateObs
 	private UnitsSelectedState unitsSelected;
 	private InputState currentState;
 	private ConsoleOverlays consoleOverlays;
+	private long leftDownStart;
 
 	public PlayerManager(Team player, ArrayBlockingQueue<InputEvent> inputEvents) {
 		this.team = player;
@@ -52,7 +56,7 @@ public class PlayerManager implements Runnable, InputEventVisitor, WorldStateObs
 		this.stopRequested = false;
 		this.selectedUnits = new ArrayList<UUID>();
 		this.selectedCasters = new ArrayList<UUID>();
-
+		this.leftDownStart = -1;
 		this.consoleOverlays = ConsoleOverlays.getInstance();
 
 		// Only create one instance of each states.
@@ -202,17 +206,18 @@ public class PlayerManager implements Runnable, InputEventVisitor, WorldStateObs
 
 				selectedCasters = selection.getHeroIds();
 
-				ArrayList<UUID> leakedCopy = new ArrayList<UUID>();
-				for (UUID id : updatedSelectedUnits) {
-					leakedCopy.add(id);
-				}
-
-				consoleOverlays.updateSelectedUnits(leakedCopy);
 			}
 			else if (selection.getBuildings().size() > 0) {
 				selectedUnits = selection.getBuildingIds();
 				selectedCasters = selectedUnits;
 			}
+
+			ArrayList<UUID> leakedCopy = new ArrayList<UUID>();
+			for (UUID id : selectedUnits) {
+				leakedCopy.add(id);
+			}
+
+			consoleOverlays.updateSelectedUnits(leakedCopy);
 
 			consoleOverlays.stopSelectionBox();
 			currentState = unitsSelected;
@@ -247,6 +252,7 @@ public class PlayerManager implements Runnable, InputEventVisitor, WorldStateObs
 		public void leftDown(EuVector location) {
 			// change state
 			currentState = selecting;
+			leftDownStart = System.currentTimeMillis();
 			selecting.setDownLocation(location);
 		}
 
@@ -257,8 +263,22 @@ public class PlayerManager implements Runnable, InputEventVisitor, WorldStateObs
 
 		@Override
 		public void rightDown(EuVector location) {
+
 			// Fire move command
-			commandQueue.add(new MoveCommand(selectedUnits, location.deepCopy()));
+
+			GameSpaceObject gso = worldState.getGsoAt(location);
+			if (gso != null) {
+				if (gso.getTeam() == Team.Neutral) {
+					commandQueue.add(new GatherCommand((new TypedSelection(worldState.getGsos(selectedUnits))).getWorkerIds(), gso.getId()));
+				}
+				else if (gso.getTeam() != team) {
+					commandQueue.add(new AttackCommand(selectedUnits, gso.getId()));
+				}
+			}
+			else {
+				commandQueue.add(new MoveCommand(selectedUnits, location.deepCopy()));
+			}
+
 		}
 
 		@Override
@@ -289,7 +309,6 @@ public class PlayerManager implements Runnable, InputEventVisitor, WorldStateObs
 						if (abilities.size() > i) {
 							Ability ability = hero.getAbilities().get(i);
 							if (ability.isImediate()) {
-								System.out.println(ability);
 								AbilityRequest request = ability.toRequest(id, worldState, new EuVector(0, 0));
 
 								commandQueue.add(new AbilityCommand(request));
@@ -330,7 +349,6 @@ public class PlayerManager implements Runnable, InputEventVisitor, WorldStateObs
 					if (abilities.size() > index) {
 						Ability ability = hero.getAbilities().get(index);
 
-						System.out.println(ability);
 						AbilityRequest request = ability.toRequest(id, worldState, location);
 
 						commandQueue.add(new AbilityCommand(request));
