@@ -15,7 +15,7 @@ public class SlashRender implements Renderable {
 	private int fromY;
 
 	public SlashRender(Slash slash) {
-		this.color = Color.RED;
+		this.color = new Color(255, 0, 0, 155);
 		this.rad = (int) slash.getExpireTime() / 500;
 		this.toX = (int) slash.getTo().getX();
 		this.toY = (int) slash.getTo().getY();

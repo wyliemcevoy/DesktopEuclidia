@@ -111,7 +111,7 @@ public class RenderCreator implements UpdateVisitor, EtherialVisitor {
 			if (unit != null) {
 				EuVector location = unit.getPosition();
 				double radius = unit.getRadius();
-				renderables.add(new CircleRender(new EuVector(location.getX(), location.getY() + radius * .5), radius * .75, radius / 3, new Color(0, 255, 0, 150)));
+				renderables.add(new CircleRender(new EuVector(location.getX(), location.getY() + radius * .5), radius * .75, radius / 3, new Color(0, 255, 0, 75)));
 			}
 		}
 
@@ -122,8 +122,6 @@ public class RenderCreator implements UpdateVisitor, EtherialVisitor {
 		for (Etherial etherial : worldState.getEtherials()) {
 			etherial.accept(this);
 		}
-
-		renderables.add(new StringRender("" + worldState.getPlayer(Team.Blue).getMinerals(), new EuVector(10, 10)));
 
 		renderables.addAll(boxDrawer.getOverlays());
 
@@ -198,14 +196,16 @@ public class RenderCreator implements UpdateVisitor, EtherialVisitor {
 	}
 
 	public AffineTransform buildTransform() {
-		AffineTransform aTransform = new AffineTransform();
-
+		AffineTransform t1 = new AffineTransform();
+		AffineTransform t2 = new AffineTransform();
 		synchronized (lock) {
-			aTransform.setToTranslation(camera.getMapX(), camera.getMapY());
-			aTransform.rotate(camera.getRotation());
-			aTransform.scale(camera.getZoom(), camera.getZoom());
+
+			t1.scale(camera.getScale(), camera.getScale());
+			t2.setToTranslation(-camera.getMapX(), -camera.getMapY());
+			t1.concatenate(t2);
+
 		}
-		return aTransform;
+		return t1;
 	}
 
 	public Camera requestCamera() {
@@ -225,5 +225,21 @@ public class RenderCreator implements UpdateVisitor, EtherialVisitor {
 	public void visit(Worker worker) {
 		this.renderables.add(new WorkerRender(worker));
 
+	}
+
+	public ArrayList<Renderable> getOverlays() {
+
+		ArrayList<Renderable> overlays = new ArrayList<Renderable>();
+
+		double width;
+		synchronized (lock) {
+			width = camera.getWidth();
+		}
+		overlays.add(new ImageRender("mineralIcon.png", new EuVector(width - 115, 3)));
+		overlays.add(new StringRender("" + worldState.getPlayer(Team.Blue).getMinerals(), new EuVector(width - 100, 15)));
+		overlays.add(new ImageRender("gasIcon.png", new EuVector(width - 65, 3)));
+		overlays.add(new StringRender("" + worldState.getPlayer(Team.Blue).getGas(), new EuVector(width - 50, 15)));
+
+		return overlays;
 	}
 }

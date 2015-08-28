@@ -269,7 +269,11 @@ public class PlayerManager implements Runnable, InputEventVisitor, WorldStateObs
 			GameSpaceObject gso = worldState.getGsoAt(location);
 			if (gso != null) {
 				if (gso.getTeam() == Team.Neutral) {
-					commandQueue.add(new GatherCommand((new TypedSelection(worldState.getGsos(selectedUnits))).getWorkerIds(), gso.getId()));
+
+					ArrayList<UUID> workerIds = (new TypedSelection(worldState.getGsos(selectedUnits))).getWorkerIds();
+					if (workerIds.size() > 0) {
+						commandQueue.add(new GatherCommand(workerIds, gso.getId()));
+					}
 				}
 				else if (gso.getTeam() != team) {
 					commandQueue.add(new AttackCommand(selectedUnits, gso.getId()));
@@ -294,12 +298,14 @@ public class PlayerManager implements Runnable, InputEventVisitor, WorldStateObs
 		@Override
 		public void abilitySelected(int i) {
 			// Change state to ability selected
+			boolean shouldChangeState = false;
 
-			if (i != -2 && selectedCasters.size() > 0) {
+			if (i == -2) {
+				shouldChangeState = true;
+			}
+			else if (i != -2 && selectedCasters.size() > 0) {
 
 				// determine if it is an instantaneous action or a target action
-
-				boolean shouldChangeState = false;
 
 				for (UUID id : selectedCasters) {
 
@@ -319,12 +325,10 @@ public class PlayerManager implements Runnable, InputEventVisitor, WorldStateObs
 						}
 					}
 				}
-
-				if (shouldChangeState) {
-					currentState = abilitySelected;
-					abilitySelected.setAbility(i);
-				}
-
+			}
+			if (shouldChangeState) {
+				currentState = abilitySelected;
+				abilitySelected.setAbility(i);
 			}
 		}
 
@@ -340,6 +344,7 @@ public class PlayerManager implements Runnable, InputEventVisitor, WorldStateObs
 
 		@Override
 		public void leftDown(EuVector location) {
+
 			// Fire ability
 			if (index >= 0) {
 				for (UUID id : selectedCasters) {
@@ -357,6 +362,11 @@ public class PlayerManager implements Runnable, InputEventVisitor, WorldStateObs
 			}
 			else if (index == -2) {
 				// Fire attack move command
+
+				MoveCommand attackMove = new MoveCommand(selectedUnits, location.deepCopy());
+				attackMove.setAttackWhileMoving(true);
+				commandQueue.add(attackMove);
+
 			}
 
 			currentState = unitsSelected;

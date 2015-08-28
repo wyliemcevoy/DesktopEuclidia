@@ -51,12 +51,13 @@ public class InputManager implements MouseListener, MouseWheelListener, KeyListe
 
 	private EuVector getMapLocation(double x, double y) {
 		synchronized (cameraChangeLock) {
-			return camera.veiwToMap(new EuVector(x, y));
+			return camera.screenToMap(new EuVector(x, y));
 		}
 	}
 
 	@Override
 	public void mouseClicked(MouseEvent e) {
+
 		this.inputEvents.add(new MouseClickedEvent(e.getButton(), getMapLocation(e.getX(), e.getY())));
 	}
 
@@ -84,7 +85,7 @@ public class InputManager implements MouseListener, MouseWheelListener, KeyListe
 	@Override
 	public void mouseWheelMoved(MouseWheelEvent e) {
 		synchronized (cameraChangeLock) {
-			camera.setZoom(camera.getZoom() + -.1 * e.getPreciseWheelRotation());
+			camera.zoom(camera.getScale() + -.1 * e.getPreciseWheelRotation());
 			this.renderCreator.requestCameraChange(camera);
 		}
 	}
@@ -156,20 +157,20 @@ public class InputManager implements MouseListener, MouseWheelListener, KeyListe
 	public void mouseMoved(MouseEvent e) {
 		double deltaX = 0;
 		double deltaY = 0;
-		double zoom = camera.getZoom();
+		double zoom = camera.getScale();
 
 		if (e.getX() < windowWidth * scrollBound) {
-			deltaX = scrollRate / zoom;
+			deltaX = -scrollRate / zoom;
 		}
 		else if (e.getX() > windowWidth * (1 - scrollBound)) {
-			deltaX = -scrollRate / zoom;
+			deltaX = scrollRate / zoom;
 		}
 
 		if (e.getY() < windowHeight * scrollBound) {
-			deltaY = scrollRate / zoom;
+			deltaY = -scrollRate / zoom;
 		}
 		else if (e.getY() > windowHeight * (1 - scrollBound)) {
-			deltaY = -scrollRate / zoom;
+			deltaY = scrollRate / zoom;
 		}
 
 		this.delta = new EuVector(deltaX, deltaY);

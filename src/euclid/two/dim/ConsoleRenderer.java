@@ -174,6 +174,10 @@ public class ConsoleRenderer extends Thread implements WorldStateObserver {
 			renderable.draw(g);
 		}
 		g.setTransform(savedAT);
+
+		for (Renderable renderable : renderCreator.getOverlays()) {
+			renderable.draw(g);
+		}
 	}
 
 	private void die() {

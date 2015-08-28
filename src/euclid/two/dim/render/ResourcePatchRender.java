@@ -9,19 +9,32 @@ public class ResourcePatchRender implements Renderable {
 
 	private int radius;
 	private int x, y;
-	private Image mineralPatch;
+	private Image resourceImage;
 
 	public ResourcePatchRender(ResourcePatch resourcePatch) {
 		this.x = (int) resourcePatch.getPosition().getX();
 		this.y = (int) resourcePatch.getPosition().getY();
 		this.radius = (int) resourcePatch.getRadius();
-		this.mineralPatch = SpriteFlyWeight.getInstance().getMineralPatch();
+
+		switch (resourcePatch.getType()) {
+		case GAS:
+			this.resourceImage = SpriteFlyWeight.getInstance().getVespene();
+			break;
+		case MINERALS:
+			this.resourceImage = SpriteFlyWeight.getInstance().getMineralPatch();
+			break;
+		default:
+			this.resourceImage = SpriteFlyWeight.getInstance().getVespene();
+
+			break;
+
+		}
 
 	}
 
 	@Override
 	public void draw(Graphics2D g) {
-		g.drawImage(mineralPatch, x - radius, y - radius, 2 * radius, 2 * radius, null);
+		g.drawImage(resourceImage, x - radius, y - radius, 2 * radius, 2 * radius, null);
 	}
 
 }
